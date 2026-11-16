@@ -1,0 +1,43 @@
+name: Build BunnyLock APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract source ZIP
+        run: |
+          mkdir source
+          unzip -q *.zip -d source
+          find source -name settings.gradle.kts -print -quit
+
+      - name: Locate project
+        run: |
+          PROJECT=$(find source -name settings.gradle.kts -printf '%h\n' | head -1)
+          echo "PROJECT=$PROJECT" >> $GITHUB_ENV
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: |
+          cd "$PROJECT"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BunnyLock-5G-SA-APK
+          path: source/**/app/build/outputs/apk/debug/*.apk
