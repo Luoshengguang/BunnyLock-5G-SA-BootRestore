@@ -19,8 +19,6 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: ''
 
       - name: Extract source ZIP
         run: |
@@ -35,10 +33,22 @@ jobs:
             exit 1
           fi
           echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
+          echo "Project: $PROJECT"
 
-      - name: Install required SDK
+      - name: Install Android packages
         run: |
-          sdkmanager --install "platforms;android-37" "ndk;29.0.14206865" "cmake;3.22.1"
+          yes | sdkmanager --licenses
+          sdkmanager --install \
+            "platforms;android-37.0" \
+            "build-tools;37.0.0" \
+            "ndk;29.0.14206865" \
+            "cmake;3.22.1"
+
+      - name: Fix Android 37 platform alias
+        run: |
+          if [ -d "$ANDROID_HOME/platforms/android-37.0" ] && [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
+            ln -s android-37.0 "$ANDROID_HOME/platforms/android-37"
+          fi
 
       - name: Build APK
         run: |
